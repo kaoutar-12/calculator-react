@@ -2,7 +2,6 @@
 
 import { useReducer } from 'react'
 
-// Define actions without exporting them
 const ACTIONS = {
   ADD_DIGIT: 'add-digit',
   CHOOSE_OPERATION: 'choose-operation',
@@ -11,7 +10,6 @@ const ACTIONS = {
   EVALUATE: 'evaluate',
 } as const;
 
-// TypeScript state and action types for better type safety
 interface CalculatorState {
   overwrite?: boolean;
   currentOperand?: string | null;
