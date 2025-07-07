@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+body {
+  background:#D495E5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
