@@ -1,46 +1,72 @@
 'use client'
 
 import { useReducer } from 'react'
-import { ACTIONS } from './constants'
 
-function reducer(state: any, { type, payload }: any) {
-  switch (type) {
+// Define actions without exporting them
+const ACTIONS = {
+  ADD_DIGIT: 'add-digit',
+  CHOOSE_OPERATION: 'choose-operation',
+  CLEAR: 'clear',
+  DELETE_DIGIT: 'delete-digit',
+  EVALUATE: 'evaluate',
+} as const;
+
+// TypeScript state and action types for better type safety
+interface CalculatorState {
+  overwrite?: boolean;
+  currentOperand?: string | null;
+  previousOperand?: string | null;
+  operation?: string | null;
+}
+
+type CalculatorAction = 
+  | { type: typeof ACTIONS.ADD_DIGIT; payload: { digit: string } }
+  | { type: typeof ACTIONS.CHOOSE_OPERATION; payload: { operation: string } }
+  | { type: typeof ACTIONS.CLEAR }
+  | { type: typeof ACTIONS.DELETE_DIGIT }
+  | { type: typeof ACTIONS.EVALUATE };
+
+function reducer(state: CalculatorState, action: CalculatorAction): CalculatorState {
+  switch (action.type) {
     case ACTIONS.ADD_DIGIT:
       if (state.overwrite) {
         return {
           ...state,
-          currentOperand: payload.digit,
+          currentOperand: action.payload.digit,
           overwrite: false,
         }
       }
-      if (payload.digit === "0" && state.currentOperand === "0") return state
-      if (payload.digit === "." && state.currentOperand?.includes(".")) return state
+      if (action.payload.digit === "0" && state.currentOperand === "0") return state
+      if (action.payload.digit === "." && state.currentOperand?.includes(".")) return state
 
       return {
         ...state,
-        currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+        currentOperand: `${state.currentOperand || ""}${action.payload.digit}`,
       }
 
     case ACTIONS.CHOOSE_OPERATION:
       if (state.currentOperand == null && state.previousOperand == null) return state
+      
       if (state.currentOperand == null) {
         return {
           ...state,
-          operation: payload.operation,
+          operation: action.payload.operation,
         }
       }
+      
       if (state.previousOperand == null) {
         return {
           ...state,
-          operation: payload.operation,
+          operation: action.payload.operation,
           previousOperand: state.currentOperand,
           currentOperand: null,
         }
       }
+      
       return {
         ...state,
         previousOperand: evaluate(state),
-        operation: payload.operation,
+        operation: action.payload.operation,
         currentOperand: null,
       }
 
@@ -90,10 +116,14 @@ function reducer(state: any, { type, payload }: any) {
   }
 }
 
-function evaluate({ currentOperand, previousOperand, operation }: any) {
+function evaluate({ currentOperand, previousOperand, operation }: CalculatorState): string {
+  if (!currentOperand || !previousOperand || !operation) return "";
+  
   const prev = parseFloat(previousOperand)
   const current = parseFloat(currentOperand)
+  
   if (isNaN(prev) || isNaN(current)) return ""
+  
   let computation = 0
   switch (operation) {
     case "+":
@@ -111,10 +141,16 @@ function evaluate({ currentOperand, previousOperand, operation }: any) {
     default:
       return ""
   }
+  
   return computation.toString()
 }
 
-function DigitButton({ dispatch, digit }: any) {
+interface DigitButtonProps {
+  dispatch: React.Dispatch<CalculatorAction>;
+  digit: string;
+}
+
+function DigitButton({ dispatch, digit }: DigitButtonProps) {
   return (
     <button
       onClick={() => dispatch({ type: ACTIONS.ADD_DIGIT, payload: { digit } })}
@@ -125,10 +161,18 @@ function DigitButton({ dispatch, digit }: any) {
   )
 }
 
-function OperationButton({ dispatch, operation }: any) {
+interface OperationButtonProps {
+  dispatch: React.Dispatch<CalculatorAction>;
+  operation: string;
+}
+
+function OperationButton({ dispatch, operation }: OperationButtonProps) {
   return (
     <button
-      onClick={() => dispatch({ type: ACTIONS.CHOOSE_OPERATION, payload: { operation } })}
+      onClick={() => dispatch({ 
+        type: ACTIONS.CHOOSE_OPERATION, 
+        payload: { operation } 
+      })}
       className="text-2xl border border-gray-300 hover:bg-gray-100 text-[#D495E5]"
     >
       {operation}
@@ -146,7 +190,9 @@ export default function Home() {
           <div className="text-gray-500 text-lg">
             {previousOperand} {operation}
           </div>
-          <div className="text-3xl font-bold text-black">{currentOperand}</div>
+          <div className="text-3xl font-bold text-black break-words min-h-[60px]">
+            {currentOperand}
+          </div>
         </div>
 
         <button
